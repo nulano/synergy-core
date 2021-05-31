@@ -19,6 +19,5 @@
     <?define QtPath="@QT_PATH@" ?>
     <?define QtBinPath="$(var.QtPath)\bin" ?>
     <?define QtPluginsPath="$(var.QtPath)\plugins" ?>
-    <?define OpenSSLPath="$(var.ExtPath)\openssl\windows\$(var.Platform)" ?>
-    <?define OpenSSLBinPath="$(var.OpenSSLPath)\bin" ?>
+    <?define OpenSSLBinPath="C:\Program Files\OpenSSL\bin" ?>
 </Include>
