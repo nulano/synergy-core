@@ -28,8 +28,6 @@ steps:
       cd $(Build.SourcesDirectory)
       python -m aqt install -b $(QLI_BASE_URL) --outputdir $(Build.Repository.LocalPath)\\deps\\Qt  $(QT_VERSION) windows desktop win64_msvc2017_64
       python -m aqt install -b $(QLI_BASE_URL) --outputdir $(Build.Repository.LocalPath)\\deps\\Qt  $(QT_VERSION) windows desktop win32_msvc2017
-      where openssl.exe
-      "C:\Program Files\OpenSSL\bin\openssl.exe" version
     displayName: 'Install Qt $(QT_VERSION)'
 
   - task: ExtractFiles@1
@@ -46,6 +44,15 @@ steps:
         Get-ChildItem '.\deps'
         msiexec.exe /i ${pwd}\deps\Bonjour64.msi INSTALLDIR="${pwd}\deps\Bonjour" /qb
     displayName: 'Installing bonjour SDK'
+
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        choco install openssl -y --forcex86 --no-progress
+        choco install openssl -y --forcex64 --no-progress
+        where openssl.exe
+    displayName: 'Installing OpenSSL (full)'
 
   - script: |
       call "%ENV_BAT%" -arch=x64
