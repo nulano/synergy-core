@@ -28,6 +28,7 @@ steps:
       cd $(Build.SourcesDirectory)
       python -m aqt install -b $(QLI_BASE_URL) --outputdir $(Build.Repository.LocalPath)\\deps\\Qt  $(QT_VERSION) windows desktop win64_msvc2017_64
       python -m aqt install -b $(QLI_BASE_URL) --outputdir $(Build.Repository.LocalPath)\\deps\\Qt  $(QT_VERSION) windows desktop win32_msvc2017
+      where openssl.exe
     displayName: 'Install Qt $(QT_VERSION)'
 
   - task: ExtractFiles@1
