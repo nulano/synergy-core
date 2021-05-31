@@ -49,12 +49,11 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        choco install openssl -y --forcex86 --no-progress
-        choco install openssl -y --forcex64 --no-progress
-        where openssl.exe
+        choco install openssl -y --no-progress
     displayName: 'Installing OpenSSL (full)'
 
   - script: |
+      where openssl.exe
       call "%ENV_BAT%" -arch=x64
       set BONJOUR_SDK_HOME=%cd%\%BONJOUR_SDK_DIR%
       mkdir build64
