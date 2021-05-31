@@ -49,8 +49,8 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        choco install openssl -y --force x86 --no-progress
-        choco install openssl -y --force x64 --no-progress
+        choco install openssl -y --forcex86 --no-progress
+        choco install openssl -y --forcex64 --no-progress
     displayName: 'Installing OpenSSL (full)'
 
   - script: |
