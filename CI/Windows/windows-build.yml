@@ -49,9 +49,9 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        choco install openssl -y --forcex86 --no-progress --dir $(Build.Repository.LocalPath)\\ext\\openssl\\windows\\x86
-        choco install openssl -y --forcex64 --no-progress --dir $(Build.Repository.LocalPath)\\ext\\openssl\\windows\\x64
-    displayName: 'Installing OpenSSL (full)'
+        choco install openssl -y --forcex64 --no-progress
+        Copy-Item -Path "C:\\Program Files\\OpenSSL-Win64" -Destination "$(Build.Repository.LocalPath)\\ext\\openssl\\windows\\x64" -Recurse
+    displayName: 'Installing OpenSSL (full) (x64)'
 
   - script: |
       where openssl.exe
@@ -81,6 +81,15 @@ steps:
     env:
       ENV_BAT: $(ENV_BAT)
       GIT_COMMIT: $(Build.SourceVersion)
+
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        choco uninstall openssl -y --ignore-autouninstaller-failure --no-progress
+        choco install openssl -y --forcex86 --no-progress
+        Copy-Item -Path "C:\\Program Files\\OpenSSL-Win32" -Destination "$(Build.Repository.LocalPath)\\ext\\openssl\\windows\\x86" -Recurse
+    displayName: 'Installing OpenSSL (full) (x86)'
 
   - script: |
       call "%ENV_BAT%" -arch=x86
