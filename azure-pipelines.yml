@@ -2,26 +2,6 @@ pr: none
 trigger: none
 
 jobs:
-  - template: CI/job-doxygen.yml
-
-  - job: Linux
-    pool:
-      vmImage: 'ubuntu-16.04'
-
-    strategy:
-      matrix:
-        ubuntu1604:
-          image: symless/synergy-core:ubuntu16.04
-          packager: deb
-          name: ubuntu16
-          makeJobsLimit: 1
-
-    container: $[ variables['image'] ]
-
-    steps:
-      - template: CI/checkout.yml
-      - template: CI/Linux/linux-build.yml
-
   - job: MacOS
     strategy:
       matrix:
