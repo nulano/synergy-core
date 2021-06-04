@@ -2,7 +2,6 @@ pr: none
 trigger: none
 
 jobs:
-
   - job: MacOS
     strategy:
       matrix:
@@ -12,7 +11,6 @@ jobs:
           version: 10.13
           buildType: "standard"
           prefix: "synergy"
-
     pool:
       vmImage: $[ variables['image'] ]
 
@@ -24,31 +22,3 @@ jobs:
     steps:
       - template: CI/checkout.yml
       - template: CI/MacOS/mac-build.yml
-
-  - job: Windows
-    strategy:
-      matrix:
-        vs2019:
-          image: windows-2019
-          buildType: "standard"
-          prefix: "synergy"
-        vs2019ent:
-          image: windows-2019
-          buildType: "enterprise"
-          prefix: "synergy-enterprise"
-
-    pool:
-      vmImage: $[ variables['image'] ]
-
-    variables:
-      QT_VERSION: '5.12.6'
-      QLI_OUT_DIR: '.\deps\Qt'
-      QLI_BASE_URL: 'http://qt.mirror.constant.com/'
-      QT_BIN_PATH: '$(Build.Repository.LocalPath)\$(QLI_OUT_DIR)\$(QT_VERSION)\msvc2017_64'
-      QT_BIN_PATH_32: '$(Build.Repository.LocalPath)\$(QLI_OUT_DIR)\$(QT_VERSION)\msvc2017'
-      BONJOUR_SDK_DIR: 'deps\BonjourSDK'
-      ENV_BAT: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\vsdevcmd'
-
-    steps:
-      - template: CI/checkout.yml
-      - template: CI/Windows/windows-build.yml
