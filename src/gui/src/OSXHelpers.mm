@@ -20,23 +20,13 @@
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
 #import <Cocoa/Cocoa.h>
-#import <array>
-#import <string>
+#import <Carbon/Carbon.h>
+
 
 bool
 isOSXSecureInputEnabled()
 {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("ioreg -l -w 0 | grep kCGSSessionSecureInputPID", "r"), pclose);
-    if (!pipe) {
-        return false;
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-    {
-        result += buffer.data();
-    }
-    return result.length() > 0;
+    return IsSecureEventInputEnabled();
 }
 
 bool
