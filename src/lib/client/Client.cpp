@@ -722,22 +722,23 @@ void
 Client::handleHello(const Event&, void*)
 {
     SInt16 major, minor;
-    String keyboardLayoutList;
+    String keyboardLayoutList("<unknown>");
     if (!ProtocolUtil::readf(m_stream, kMsgHello, &major, &minor, &keyboardLayoutList)) {
         sendConnectionFailedEvent("Protocol error from server, check encryption settings");
         cleanupTimer();
         cleanupConnection();
         return;
     }
+    //LOG((CLOG_ERR "_________________Server all language %s", keyboardLayoutList.c_str()));
 
     auto localLayouts = AppUtil::instance().getKeyboardLayoutList();
-    for(size_t i = 0; i <= keyboardLayoutList.size() - 2; i +=2) {
+    for(int i = 0; i <= (int)keyboardLayoutList.size() - 2; i +=2) {
         auto serverLayout = keyboardLayoutList.substr(i, 2);
         if (std::find(localLayouts.begin(), localLayouts.end(), serverLayout) == localLayouts.end()) {
-            LOG((CLOG_ERR "_________________Client missed server language %s", &serverLayout));
+            LOG((CLOG_ERR "_________________Client missed server language %s", serverLayout.c_str()));
         }
         else {
-            LOG((CLOG_NOTE "_______________Server language %s is supported", &serverLayout));
+            LOG((CLOG_NOTE "_______________Server language %s is supported", serverLayout.c_str()));
         }
     }
 
@@ -753,9 +754,14 @@ Client::handleHello(const Event&, void*)
 
     // say hello back
     LOG((CLOG_DEBUG1 "say hello version %d.%d", kProtocolMajorVersion, kProtocolMinorVersion));
+    String allKeyboardLayoutsStr;
+    for (auto layout : AppUtil::instance().getKeyboardLayoutList()) {
+        allKeyboardLayoutsStr += layout;
+    }
+    //((CLOG_NOTE "___________Language list to server %s", allKeyboardLayoutsStr.c_str()));
     ProtocolUtil::writef(m_stream, kMsgHelloBack,
                             kProtocolMajorVersion,
-                            kProtocolMinorVersion, &m_name);
+                            kProtocolMinorVersion, &m_name, &allKeyboardLayoutsStr);
 
     // now connected but waiting to complete handshake
     setupScreen();

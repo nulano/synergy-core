@@ -29,9 +29,10 @@
 // 1.4:  adds crypto support
 // 1.5:  adds file transfer and removes home brew crypto
 // 1.6:  adds clipboard streaming
+// 1.6:  adds language list in hello and helloBack msg
 // NOTE: with new version, synergy minor version should increment
 static const SInt16        kProtocolMajorVersion = 1;
-static const SInt16        kProtocolMinorVersion = 6;
+static const SInt16        kProtocolMinorVersion = 7;
 
 // default contact port number
 static const UInt16        kDefaultPort = 24800;
@@ -109,7 +110,7 @@ extern const char*        kMsgHello;
 // respond to hello from server;  secondary -> primary
 // $1 = protocol major version number supported by client.  $2 =
 // protocol minor version number supported by client.  $3 = client
-// name.
+// name. $4 = client language list
 extern const char*        kMsgHelloBack;
 
 
