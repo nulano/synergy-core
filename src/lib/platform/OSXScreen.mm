@@ -48,9 +48,6 @@
 #include <AppKit/NSEvent.h>
 #include <libproc.h>
 
-#include <UserNotifications/UNNotification.h>
-#include <UserNotifications/UNUserNotificationCenter.h>
-
 // This isn't in any Apple SDK that I know of as of yet.
 enum {
 	kSynergyEventMouseScroll = 11,
@@ -64,7 +61,6 @@ enum {
 
 int getSecureInputEventPID();
 String getProcessName(int pid);
-bool isDevelopmentBuild();
 
 // TODO: upgrade deprecated function usage in these functions.
 void setZeroSuppressionInterval();
@@ -2163,78 +2159,27 @@ OSXScreen::waitForCarbonLoop() const
 
 }
 
-bool
-OSXScreen::requestNotificationPermissions() const
-{
-	NSBundle *bundle = [NSBundle mainBundle];
-	NSDictionary *info = [bundle infoDictionary];
-	NSString *prodName = [info objectForKey:@"CFBundleName"];
-	if(prodName != nil)
-		LOG((CLOG_INFO "CFBundleName server: %s",
-			 String([prodName UTF8String]).c_str())
-		);
-	else
-		LOG((CLOG_INFO "CFBundleName server is nil"));
-
-	// accessing notification center on unsigned build causes an immidiate
-	// application shutodown (in this case synergys) and cannot be caught
-	// to avoid issues with it need to first check if this is a dev build
-	if (isDevelopmentBuild())
-	{
-		LOG((CLOG_WARN "Not showing notifications permission request on development builds"));
-		return false;
-	}
-	else
-	{
-		UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-		[center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound)
-			completionHandler:^(BOOL granted, NSError * _Nullable error) {
-			LOG((CLOG_INFO "Permission granted: %d. Error: %s",
-				 granted,
-				 String([[NSString stringWithFormat:@"%@", error] UTF8String]).c_str())
-			);
-		}];
-		LOG((CLOG_INFO "Asked for user permission to show notifications"));
-	}
-	return true;
-}
-
 void
 OSXScreen::createNotification(const String& title, const String& content) const
 {
-    LOG((CLOG_INFO "Showing notification from server"));
-
-    NSUserNotification* notification = [[NSUserNotification alloc] init];
-    notification.title = @"title";
-    notification.informativeText = @"message";
-    notification.soundName = NSUserNotificationDefaultSoundName;   //Will play a default sound
-    [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification: notification];
-    [notification autorelease];
+    LOG((CLOG_INFO "OSX Notification: %s|%s", title.c_str(), content.c_str()));
 }
 
 void
 OSXScreen::createSecureInputNotification()
 {
-    createNotification("a", "b");
-    /*
-    QMessageBox message(this);
-    message.addButton(QObject::tr("Accept"), QMessageBox::AcceptRole);
-    std::string messageText =
+    std::string secureInputNotificationBody =
             "Secure input was enabled in your system by another application. " \
-            "Synergy will not be able to send keyboard strokes while the secure input is enabled\n\n";
-    int secureInputProcessPID = getOSXSecureInputEventPID();
-    std::string infringingProcessName = getOSXProcessName(secureInputProcessPID);
+            "Synergy will not be able to send keyboard strokes while the secure input is enabled. ";
 
-    // IO registry may not contain the secure input process PID
-    // in this case don't add an option to quit the infringing app
+    int secureInputProcessPID = getSecureInputEventPID();
+    std::string infringingProcessName = getProcessName(secureInputProcessPID);
     if(secureInputProcessPID == 0) infringingProcessName = "unknown";
-    else message.addButton(QString("Quit %1").arg(infringingProcessName.c_str()), QMessageBox::ApplyRole);
-    messageText += "Infringing process is " + infringingProcessName;
-    message.setText(QObject::tr(messageText.c_str()));
+    secureInputNotificationBody += "Infringing process is " + infringingProcessName;
 
-    // if user decides to stop the app send the SIGTERM signal
-    if (message.exec() == QMessageBox::Accepted && secureInputProcessPID) kill(secureInputProcessPID, SIGTERM);
-    */
+    createNotification(
+                "Keyboard may not work correctly",
+                secureInputNotificationBody);
 }
 
 int
@@ -2290,14 +2235,6 @@ getProcessName(int pid)
     char buf[128];
     proc_name(pid, buf, sizeof(buf));
     return buf;
-}
-
-bool
-isDevelopmentBuild()
-{
-	NSURL* url = [[NSBundle mainBundle] bundleURL];
-	String bundleURL = [url.absoluteString UTF8String];
-	return (bundleURL.find("Applications/Synergy.app") == String::npos);
 }
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
