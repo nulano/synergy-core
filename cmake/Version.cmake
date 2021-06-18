@@ -8,7 +8,7 @@ set (SYNERGY_VERSION_MAJOR 1)
 set (SYNERGY_VERSION_MINOR 14)
 set (SYNERGY_VERSION_PATCH 1)
 set (SYNERGY_VERSION_BUILD 1)
-set (SYNERGY_VERSION_STAGE "test-language-sync")
+set (SYNERGY_VERSION_STAGE "testlanguagesync")
 
 #
 # Version from CI
