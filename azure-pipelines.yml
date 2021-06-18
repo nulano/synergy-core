@@ -2,8 +2,6 @@ pr: none
 trigger: none
 
 jobs:
-  - template: CI/job-doxygen.yml
-
   - job: Linux
     pool:
       vmImage: 'ubuntu-latest'
