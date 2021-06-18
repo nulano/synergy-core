@@ -144,6 +144,7 @@ public slots:
         void startSynergy();
         void retryStart(); // If the connection failed this will retry a startSynergy
         void actionStart();
+        void handleIdleService(const QString& text);
 
     protected slots:
         void updateLocalFingerprint();
@@ -163,6 +164,7 @@ public slots:
         void logError();
         void updateFound(const QString& version);
         void saveSettings();
+        void checkSystemInterruptions();
 
         /// @brief Receives the signal that the auto config option has changed
         void zeroConfToggled();
@@ -245,6 +247,11 @@ public slots:
         QString             m_SecureSocketVersion;      // brief Contains the version of the Secure Socket currently active
         ServerConnection    m_serverConnection;
         ClientConnection    m_clientConnection;
+        QTimer              m_systemInterruptionCheckTimer; // Timer used for sceduling a task for detecting the system
+                                                            // operations preventing the Synergy from working properly
+#if defined(Q_OS_MAC)
+        bool                m_isSecureInputNotificationShown = false;
+#endif
 
         void                updateAutoConfigWidgets();
         

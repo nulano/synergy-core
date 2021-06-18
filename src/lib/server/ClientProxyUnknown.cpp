@@ -36,6 +36,8 @@
 #include "base/IEventQueue.h"
 #include "base/TMethodEventJob.h"
 
+#include <algorithm>
+
 //
 // ClientProxyUnknown
 //
@@ -57,10 +59,9 @@ ClientProxyUnknown::ClientProxyUnknown(synergy::IStream* stream, double timeout,
 
     LOG((CLOG_DEBUG1 "saying hello"));
     String allKeyboardLayoutsStr;
-    for (auto layout : AppUtil::instance().getKeyboardLayoutList()) {
+    for (const auto& layout : AppUtil::instance().getKeyboardLayoutList()) {
         allKeyboardLayoutsStr += layout;
     }
-    //LOG((CLOG_NOTE "___________Language list to client %s", allKeyboardLayoutsStr.c_str()));
     ProtocolUtil::writef(m_stream, kMsgHello,
                             kProtocolMajorVersion,
                             kProtocolMinorVersion,
@@ -204,17 +205,23 @@ ClientProxyUnknown::handleData(const Event&, void*)
             throw XIncompatibleClient(major, minor);
         }
 
-        //LOG((CLOG_ERR "_________________Client all language %s", keyboardLayoutList.c_str()));
-
+        String missedLanguages;
+        String supportedLanguages;
         auto localLayouts = AppUtil::instance().getKeyboardLayoutList();
         for(int i = 0; i <= (int)keyboardLayoutList.size() - 2; i +=2) {
             auto serverLayout = keyboardLayoutList.substr(i, 2);
             if (std::find(localLayouts.begin(), localLayouts.end(), serverLayout) == localLayouts.end()) {
-                LOG((CLOG_ERR "_________________Server missed client language %s", serverLayout.c_str()));
+                missedLanguages += serverLayout;
+                missedLanguages += ' ';
             }
             else {
-                LOG((CLOG_NOTE "_______________Client language %s is supported", serverLayout.c_str()));
+                supportedLanguages += serverLayout;
+                supportedLanguages += ' ';
             }
+        }
+
+        if(!supportedLanguages.empty()) {
+            LOG((CLOG_DEBUG "Supported client languages: %s", supportedLanguages.c_str()));
         }
 
         // remove stream event handlers.  the proxy we're about to create
@@ -258,6 +265,11 @@ ClientProxyUnknown::handleData(const Event&, void*)
         // hangup (with error) if version isn't supported
         if (m_proxy == NULL) {
             throw XIncompatibleClient(major, minor);
+        }
+
+        if(!missedLanguages.empty()) {
+            AppUtil::instance().showMessageBox("Language synchronization error",
+                                               String("This languages are required for server proper work: ") + missedLanguages);
         }
 
         // the proxy is created and now proxy now owns the stream

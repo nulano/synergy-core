@@ -139,6 +139,7 @@ MainWindow::MainWindow (AppConfig& appConfig,
     connect(&m_IpcClient, SIGNAL(readLogLine(const QString&)), this, SLOT(appendLogRaw(const QString&)));
     connect(&m_IpcClient, SIGNAL(errorMessage(const QString&)), this, SLOT(appendLogError(const QString&)));
     connect(&m_IpcClient, SIGNAL(infoMessage(const QString&)), this, SLOT(appendLogInfo(const QString&)));
+    connect(&m_IpcClient, SIGNAL(readLogLine(const QString&)), this, SLOT(handleIdleService(const QString&)));
     m_IpcClient.connectToHost();
 #endif
 
@@ -246,7 +247,7 @@ void MainWindow::open()
     // only start if user has previously started. this stops the gui from
     // auto hiding before the user has configured synergy (which of course
     // confuses first time users, who think synergy has crashed).
-    if (appConfig().startedBefore() && appConfig().processMode() == Desktop) {
+    if (appConfig().startedBefore() && appConfig().processMode() == ProcessMode::Desktop) {
         startSynergy();
     }
 }
@@ -327,6 +328,42 @@ void MainWindow::saveSettings()
     GUI::Config::ConfigWriter::make()->globalSave();
 }
 
+void MainWindow::checkSystemInterruptions()
+{
+    if(synergyType() == synergyServer)
+    {
+#if defined(Q_OS_MAC)
+        if(!isOSXSecureInputEnabled())
+        {
+            m_isSecureInputNotificationShown = false;
+        }
+        else if(!m_isSecureInputNotificationShown)
+        {
+            // avoid showing multiple duplicate messages
+            m_isSecureInputNotificationShown = true;
+
+            QMessageBox message(this);
+            message.addButton(QObject::tr("Accept"), QMessageBox::AcceptRole);
+            std::string messageText =
+                    "Secure input was enabled in your system by another application. " \
+                    "Synergy will not be able to send keyboard strokes while the secure input is enabled\n\n";
+            int secureInputProcessPID = getOSXSecureInputEventPID();
+            std::string infringingProcessName = getOSXProcessName(secureInputProcessPID);
+
+            // IO registry may not contain the secure input process PID
+            // in this case don't add an option to quit the infringing app
+            if(secureInputProcessPID == 0) infringingProcessName = "unknown";
+            else message.addButton(QString("Quit %1").arg(infringingProcessName.c_str()), QMessageBox::ApplyRole);
+            messageText += "Infringing process is " + infringingProcessName;
+            message.setText(QObject::tr(messageText.c_str()));
+
+            // if user decides to stop the app send the SIGTERM signal
+            if (message.exec() == QMessageBox::Accepted && secureInputProcessPID) kill(secureInputProcessPID, SIGTERM);
+        }
+#endif
+    }
+}
+
 void MainWindow::zeroConfToggled() {
 #if !defined(SYNERGY_ENTERPRISE) && defined(SYNERGY_AUTOCONFIG)
     updateZeroconfService();
@@ -342,10 +379,19 @@ void MainWindow::setIcon(qSynergyState state) const
     QIcon icon;
 
 #ifdef Q_OS_MAC
-    if (isOSXUseDarkIcons())
-        icon.addFile(synergyDarkIconFiles[state]);
-    else
-        icon.addFile(synergyLightIconFiles[state]);
+    switch(getOSXIconsTheme()) {
+        case IconsTheme::ICONS_DARK:
+            icon.addFile(synergyDarkIconFiles[state]);
+            break;
+        case IconsTheme::ICONS_LIGHT:
+            icon.addFile(synergyLightIconFiles[state]);
+            break;
+        case IconsTheme::ICONS_TEMPLATE:
+        default:
+            icon.addFile(synergyDarkIconFiles[state]);
+            icon.setIsMask(true);
+            break;
+    }
 #else
     icon.addFile(synergyDefaultIconFiles[state]);
 #endif
@@ -431,6 +477,16 @@ void MainWindow::appendLogRaw(const QString& text)
 
             m_pLogOutput->appendPlainText(line);
             updateFromLogLine(line);
+        }
+    }
+}
+
+void MainWindow::handleIdleService(const QString& text)
+{
+    foreach(QString line, text.split(QRegExp("\r|\n|\r\n"))) {
+        // only start if there is no active service running
+        if (!line.isEmpty() && line.contains("service status: idle") && appConfig().startedBefore()) {
+            startSynergy();
         }
     }
 }
@@ -664,6 +720,11 @@ void MainWindow::startSynergy()
     }
 #endif
 
+    if (m_AppConfig->getPreventSleep())
+    {
+        args << "--prevent-sleep";
+    }
+
     // put a space between last log output and new instance.
     if (!m_pLogOutput->toPlainText().isEmpty())
         appendLogRaw("");
@@ -682,6 +743,7 @@ void MainWindow::startSynergy()
         connect(synergyProcess(), SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(synergyFinished(int, QProcess::ExitStatus)));
         connect(synergyProcess(), SIGNAL(readyReadStandardOutput()), this, SLOT(logOutput()));
         connect(synergyProcess(), SIGNAL(readyReadStandardError()), this, SLOT(logError()));
+        connect(&m_systemInterruptionCheckTimer, SIGNAL(timeout()), this, SLOT(checkSystemInterruptions()));
     }
 
     qDebug() << args;
@@ -999,6 +1061,7 @@ void MainWindow::setSynergyState(qSynergyState state)
         connect (m_pButtonToggleStart, SIGNAL(clicked()), m_pActionStopSynergy, SLOT(trigger()));
         m_pButtonToggleStart->setText(tr("&Stop"));
         m_pButtonApply->setEnabled(true);
+        m_systemInterruptionCheckTimer.start(5000); // check every 5 seconds
     }
     else if (state == synergyDisconnected)
     {
@@ -1006,6 +1069,7 @@ void MainWindow::setSynergyState(qSynergyState state)
         connect (m_pButtonToggleStart, SIGNAL(clicked()), m_pActionStartSynergy, SLOT(trigger()));
         m_pButtonToggleStart->setText(tr("&Start"));
         m_pButtonApply->setEnabled(false);
+        m_systemInterruptionCheckTimer.stop();
     }
 
     bool running = false;

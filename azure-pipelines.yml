@@ -2,6 +2,37 @@ pr: none
 trigger: none
 
 jobs:
+  - template: CI/job-doxygen.yml
+
+  - job: Linux
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    strategy:
+      matrix:
+        ubuntu2104:
+          image: symless/synergy-core:ubuntu21.04
+          packager: deb
+          name: ubuntu21
+        debian10:
+          image: symless/synergy-core:debian10
+          packager: deb
+          name: debian10
+        fedora34:
+          image: symless/synergy-core:fedora34
+          packager: rpm
+          name: fedora34
+        centos8:
+          image: symless/synergy-core:centos8
+          packager: rpm
+          name: centos8
+
+    container: $[ variables['image'] ]
+
+    steps:
+      - template: CI/checkout.yml
+      - template: CI/Linux/linux-build.yml
+
   - job: MacOS
     strategy:
       matrix:

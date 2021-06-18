@@ -18,7 +18,15 @@
 
 #include "synergy/unix/AppUtilUnix.h"
 #include "synergy/ArgsBase.h"
+#include <thread>
+
+#if WINAPI_XWINDOWS
+#include "synergy/unix/X11LayoutsParser.h"
+#elif WINAPI_CARBON
 #include <Carbon/Carbon.h>
+#else
+#error Platform not supported.
+#endif
 
 AppUtilUnix::AppUtilUnix(IEventQueue* events)
 {
@@ -46,10 +54,14 @@ AppUtilUnix::startNode()
     app().startNode();
 }
 
-std::vector<std::string>
+std::vector<String>
 AppUtilUnix::getKeyboardLayoutList()
 {
-    std::vector<std::string> layoutLangCodes;
+    std::vector<String> layoutLangCodes;
+
+#if WINAPI_XWINDOWS
+    layoutLangCodes = X11LayoutsParser::getX11LanguageList();
+#elif WINAPI_CARBON
     CFStringRef keys[] = { kTISPropertyInputSourceCategory };
     CFStringRef values[] = { kTISCategoryKeyboardInputSource };
     CFDictionaryRef dict = CFDictionaryCreate(NULL, (const void **)keys, (const void **)values, 1, NULL, NULL);
@@ -76,6 +88,27 @@ AppUtilUnix::getKeyboardLayoutList()
             break;
         }
     }
+#endif
 
     return layoutLangCodes;
+}
+
+void
+AppUtilUnix::showMessageBox(const String& title, const String& text)
+{
+    auto thr = std::thread([=]
+    {
+#if WINAPI_XWINDOWS
+        system(String("DISPLAY=:0.0 /usr/bin/notify-send \"" + title + "\" \"" + text + "\"").c_str());
+#elif WINAPI_CARBON
+        CFStringRef titleStrRef = CFStringCreateWithCString(kCFAllocatorDefault, title.c_str(), kCFStringEncodingMacRoman);
+        CFStringRef textStrRef = CFStringCreateWithCString(kCFAllocatorDefault, text.c_str(), kCFStringEncodingMacRoman);
+
+        CFUserNotificationDisplayNotice(0, kCFUserNotificationNoteAlertLevel, NULL, NULL, NULL, titleStrRef, textStrRef, CFSTR("OK"));
+
+        CFRelease(titleStrRef);
+        CFRelease(textStrRef);
+#endif
+    });
+    thr.detach();
 }
