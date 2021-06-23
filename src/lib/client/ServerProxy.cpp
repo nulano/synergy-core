@@ -132,7 +132,7 @@ ServerProxy::handleData(const Event&, void*)
             LOG((CLOG_ERR "invalid message from server: %c%c%c%c", code[0], code[1], code[2], code[3]));
             // not possible to determine message boundaries
             // read the whole stream to discard unkonwn data
-            while (m_stream->read(NULL, 4));
+            while (m_stream->read(nullptr, 4));
             break;
 
         case kDisconnect:
@@ -918,12 +918,13 @@ ServerProxy::secureInputNotification()
 {
     String app;
     ProtocolUtil::readf(m_stream, kMsgDSecureInputNotification + 4, &app);
-    
-    std::string secureInputNotificationBody =
-        "Secure input was enabled in your system. " \
-        "Synergy may not be able to send keyboard strokes. ";
 
-    secureInputNotificationBody += "Infringing process is " + app;
+    String secureInputNotificationBody =
+        "'Secure input' enabled by " + app + " on the server. " \
+        "To fix the keyboard, " + app + " must be closed.";
 
-    AppUtil::instance().showNotification("Keyboard may not work correctly", secureInputNotificationBody);
+    // display this notification on the client
+    AppUtil::instance().showNotification(
+                "The keyboard may stop working.",
+                secureInputNotificationBody);
 }
