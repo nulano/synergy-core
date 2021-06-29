@@ -104,7 +104,6 @@ public:
     
     //! Send dragging file information back to server
     void                sendDragInfo(UInt32 fileCount, String& info, size_t size);
-
     
     //@}
     //! @name accessors
@@ -206,6 +205,7 @@ private:
     void                handleFileChunkSending(const Event&, void*);
     void                handleFileRecieveCompleted(const Event&, void*);
     void                handleStopRetry(const Event&, void*);
+    void                handleLangCheck(const Event&, void*);
     void                onFileRecieveCompleted();
     void                sendClipboardThread(void*);
 
@@ -241,4 +241,8 @@ private:
     size_t              m_maximumClipboardSize;
     lib::synergy::ClientArgs          m_args;
     size_t              m_resolvedAddressesCount = 0;
+    SInt16              m_helloBackMajor;
+    SInt16              m_helloBackMinor;
+    EventQueueTimer*    m_languageCheckTimer = nullptr;
+    String              m_currentLanguageCode = "";
 };

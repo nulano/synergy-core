@@ -31,4 +31,6 @@ public:
     virtual void startNode() = 0;
     virtual std::vector<String> getKeyboardLayoutList() = 0;
     virtual void showMessageBox(const String& title, const String& text) = 0;
+    virtual void setKeyboardLanguage(String lang) = 0;
+    virtual String getKeyboardLanguage() = 0;
 };

@@ -77,7 +77,9 @@ Client::Client(
     m_useSecureNetwork(args.m_enableCrypto),
     m_args(args),
     m_enableClipboard(true),
-	m_maximumClipboardSize(INT_MAX)
+    m_maximumClipboardSize(INT_MAX),
+    m_helloBackMajor(kProtocolMajorVersion),
+    m_helloBackMinor(kProtocolMinorVersion)
 {
     assert(m_socketFactory != NULL);
     assert(m_screen        != NULL);
@@ -261,6 +263,14 @@ Client::enter(SInt32 xAbs, SInt32 yAbs, UInt32, KeyModifierMask mask, bool)
         StreamChunker::interruptFile();
         m_sendFileThread = NULL;
     }
+
+    if(m_helloBackMajor >= 1 && m_helloBackMinor >= 7) {
+        // we need to poll language changes
+        m_languageCheckTimer = m_events->newTimer(0.1, NULL);
+        m_events->adoptHandler(Event::kTimer, m_languageCheckTimer,
+                                new TMethodEventJob<Client>(this,
+                                &Client::handleLangCheck));
+    }
 }
 
 bool
@@ -277,6 +287,13 @@ Client::leave()
                 sendClipboard(id);
             }
         }
+    }
+
+    // uninstall lang check timer
+    if (m_languageCheckTimer != NULL) {
+        m_events->removeHandler(Event::kTimer, m_languageCheckTimer);
+        m_events->deleteTimer(m_languageCheckTimer);
+        m_languageCheckTimer = NULL;
     }
 
     return true;
@@ -722,36 +739,22 @@ void
 Client::handleHello(const Event&, void*)
 {
     SInt16 major, minor;
-    String keyboardLayoutList("<unknown>");
-    if (!ProtocolUtil::readf(m_stream, kMsgHello, &major, &minor, &keyboardLayoutList)) {
+    if (!ProtocolUtil::readf(m_stream, kMsgHello, &major, &minor)) {
         sendConnectionFailedEvent("Protocol error from server, check encryption settings");
         cleanupTimer();
         cleanupConnection();
         return;
     }
 
-    String missedLanguages;
-    String supportedLanguages;
-    auto localLayouts = AppUtil::instance().getKeyboardLayoutList();
-    for(int i = 0; i <= (int)keyboardLayoutList.size() - 2; i +=2) {
-        auto serverLayout = keyboardLayoutList.substr(i, 2);
-        if (std::find(localLayouts.begin(), localLayouts.end(), serverLayout) == localLayouts.end()) {
-            missedLanguages += serverLayout;
-            missedLanguages += ' ';
-        }
-        else {
-            supportedLanguages += serverLayout;
-            supportedLanguages += ' ';
-        }
-    }
-
-    if(!supportedLanguages.empty()) {
-        LOG((CLOG_DEBUG "Supported server languages: %s", supportedLanguages.c_str()));
-    }
-
     // check versions
     LOG((CLOG_DEBUG1 "got hello version %d.%d", major, minor));
-    if (major < kProtocolMajorVersion ||
+
+    if(major == kProtocolMajorVersion && minor == 6 && kProtocolMinorVersion == 7) {
+        //because 1.6 and 1.7 is comptable - downgrading protocol for server
+        LOG((CLOG_NOTE "Downgrading protocol version for server"));
+        m_helloBackMinor = minor;
+    }
+    else if (major < kProtocolMajorVersion ||
         (major == kProtocolMajorVersion && minor < kProtocolMinorVersion)) {
         sendConnectionFailedEvent(XIncompatibleClient(major, minor).what());
         cleanupTimer();
@@ -760,19 +763,10 @@ Client::handleHello(const Event&, void*)
     }
 
     // say hello back
-    LOG((CLOG_DEBUG1 "say hello version %d.%d", kProtocolMajorVersion, kProtocolMinorVersion));
-    String allKeyboardLayoutsStr;
-    for (const auto& layout : AppUtil::instance().getKeyboardLayoutList()) {
-        allKeyboardLayoutsStr += layout;
-    }
+    LOG((CLOG_DEBUG1 "say hello version %d.%d", m_helloBackMajor, m_helloBackMinor));
     ProtocolUtil::writef(m_stream, kMsgHelloBack,
-                            kProtocolMajorVersion,
-                            kProtocolMinorVersion, &m_name, &allKeyboardLayoutsStr);
-
-    if(!missedLanguages.empty()) {
-        AppUtil::instance().showMessageBox("Language synchronization error",
-                                           String("This languages are required for client proper work: ") + missedLanguages);
-    }
+                            m_helloBackMajor,
+                            m_helloBackMinor, &m_name);
 
     // now connected but waiting to complete handshake
     setupScreen();
@@ -834,6 +828,19 @@ void
 Client::handleStopRetry(const Event&, void*)
 {
     m_args.m_restartable = false;
+}
+
+void
+Client::handleLangCheck(const Event&, void*)
+{
+    auto code = AppUtil::instance().getKeyboardLanguage();
+    if(m_currentLanguageCode.empty()) {
+        m_currentLanguageCode = code;
+    }
+    else if(m_currentLanguageCode != code) {
+        m_currentLanguageCode = code;
+        m_server->sendLangInfo(m_currentLanguageCode);
+    }
 }
 
 void
@@ -901,3 +908,4 @@ Client::sendDragInfo(UInt32 fileCount, String& info, size_t size)
 {
     m_server->sendDragInfo(fileCount, info.c_str(), size);
 }
+

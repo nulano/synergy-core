@@ -19,6 +19,7 @@
 #include "client/ServerProxy.h"
 
 #include "client/Client.h"
+#include "synergy/AppUtil.h"
 #include "synergy/FileChunk.h"
 #include "synergy/ClipboardChunk.h"
 #include "synergy/StreamChunker.h"
@@ -32,6 +33,7 @@
 #include "base/TMethodEventJob.h"
 #include "base/XBase.h"
 
+#include <algorithm>
 #include <memory>
 
 //
@@ -81,6 +83,8 @@ ServerProxy::~ServerProxy()
     setKeepAliveRate(-1.0);
     m_events->removeHandler(m_events->forIStream().inputReady(),
                             m_stream->getEventTarget());
+    m_events->removeHandler(m_events->forClipboard().clipboardSending(),
+                            this);
 }
 
 void
@@ -302,6 +306,13 @@ ServerProxy::parseMessage(const UInt8* code)
     }
     else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
         dragInfoReceived();
+    }
+
+    else if (memcmp(code, kMsgDLanguageList, 4) == 0) {
+        langInfoReceived();
+    }
+    else if (memcmp(code, kMsgDLanguageSet, 4) == 0) {
+        langSetReceived();
     }
 
     else if (memcmp(code, kMsgCClose, 4) == 0) {
@@ -889,6 +900,52 @@ ServerProxy::dragInfoReceived()
 }
 
 void
+ServerProxy::langInfoReceived()
+{
+    String keyboardLayoutList = "";
+    ProtocolUtil::readf(m_stream, kMsgDLanguageList + 4, &keyboardLayoutList);
+
+    String missedLanguages;
+    String supportedLanguages;
+    auto localLayouts = AppUtil::instance().getKeyboardLayoutList();
+    for(int i = 0; i <= (int)keyboardLayoutList.size() - 2; i +=2) {
+        auto serverLayout = keyboardLayoutList.substr(i, 2);
+        if (std::find(localLayouts.begin(), localLayouts.end(), serverLayout) == localLayouts.end()) {
+            missedLanguages += serverLayout + ' ';
+        }
+        else {
+            supportedLanguages += serverLayout + ' ';
+        }
+    }
+
+    if(!supportedLanguages.empty()) {
+        LOG((CLOG_DEBUG "Supported server languages: %s", supportedLanguages.c_str()));
+    }
+
+    if(!missedLanguages.empty()) {
+        AppUtil::instance().showMessageBox("Language synchronization error",
+                                           String("This languages are required for client proper work: ") + missedLanguages);
+    }
+
+    String allKeyboardLayoutsStr;
+    for (const auto& layout : localLayouts) {
+        allKeyboardLayoutsStr += layout;
+    }
+
+    ProtocolUtil::writef(m_stream, kMsgDLanguageList, &allKeyboardLayoutsStr);
+}
+
+void
+ServerProxy::langSetReceived()
+{
+    String languageCode = "";
+    ProtocolUtil::readf(m_stream, kMsgDLanguageSet + 4, &languageCode);
+
+    LOG((CLOG_DEBUG "Recieved language code from server: %s", languageCode.c_str()));
+    AppUtil::instance().setKeyboardLanguage(languageCode);
+}
+
+void
 ServerProxy::handleClipboardSendingEvent(const Event& event, void*)
 {
     ClipboardChunk::send(m_stream, event.getData());
@@ -906,3 +963,11 @@ ServerProxy::sendDragInfo(UInt32 fileCount, const char* info, size_t size)
     String data(info, size);
     ProtocolUtil::writef(m_stream, kMsgDDragInfo, fileCount, &data);
 }
+
+void
+ServerProxy::sendLangInfo(String& info)
+{
+    LOG((CLOG_DEBUG "send new client language to server: %s", info.c_str()));
+    ProtocolUtil::writef(m_stream, kMsgDLanguageSet, &info);
+}
+

@@ -213,3 +213,66 @@ AppUtilWindows::showMessageBox(const String& title, const String& text)
     thr.detach();
 }
 
+void
+AppUtilWindows::setKeyboardLanguage(String lang)
+{
+    auto fW = GetForegroundWindow();
+    if(!fW)
+    {
+        LOG((CLOG_WARN "Failed to get foreground windows to set language!"));
+        return;
+    }
+
+    auto uLayouts = GetKeyboardLayoutList(0, NULL);
+    auto lpList = (HKL*)LocalAlloc(LPTR, (uLayouts * sizeof(HKL)));
+    uLayouts = GetKeyboardLayoutList(uLayouts, lpList);
+    int i = 0;
+    for (; i < uLayouts; ++i){
+        char code[32];
+        GetLocaleInfoA(MAKELCID(((UINT)lpList[i] & 0xffffffff), SORT_DEFAULT), LOCALE_SISO639LANGNAME, code, 32);
+        if(lang == String(code))
+        {
+            if(!PostMessage(fW, WM_INPUTLANGCHANGEREQUEST, 1, (LPARAM)lpList[i]))
+            {
+                LOG((CLOG_WARN "Failed to post message of language change request!"));
+            }
+            else
+            {
+                LOG((CLOG_DEBUG "Language \"%s\" is selected!", lang.c_str()));
+            }
+            break;
+        }
+    }
+
+    if (lpList) {
+        LocalFree(lpList);
+    }
+
+    if(i == uLayouts) {
+        LOG((CLOG_WARN "Failed to change keyboard layout. Requested language is not installed!"));
+    }
+}
+
+String
+AppUtilWindows::getKeyboardLanguage()
+{
+    auto fW = GetForegroundWindow();
+    if(!fW)
+    {
+        LOG((CLOG_WARN "Failed to get foreground windows to get language!"));
+        return "";
+    }
+
+    auto pID = GetWindowThreadProcessId(fW, NULL);
+    if(!pID)
+    {
+        LOG((CLOG_WARN "Failed to get process ID to get language!"));
+        return "";
+    }
+
+    char code[32];
+    GetLocaleInfoA(MAKELCID(GetKeyboardLayout(pID), SORT_DEFAULT), LOCALE_SISO639LANGNAME, code, 32);
+    return code;
+}
+
+

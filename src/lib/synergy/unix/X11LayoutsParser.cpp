@@ -200,3 +200,46 @@ X11LayoutsParser::getX11LanguageList()
 
     return result;
 }
+
+String
+X11LayoutsParser::getIsoCodeByX11LanguageName(String name)
+{
+    auto allLang = getAllLanguageData();
+
+    std::vector<String> iso639_2Codes;
+    for(const auto& lang : allLang) {
+        if(lang.descr == name) {
+            iso639_2Codes = lang.layoutBaseISO639_2;
+            break;
+        }
+
+        auto variantIter = std::find_if(lang.variants.begin(), lang.variants.end(), [name](const Lang& l) {return l.descr == name;});
+        if(variantIter != lang.variants.end()) {
+            iso639_2Codes = variantIter->layoutBaseISO639_2.empty() ? lang.layoutBaseISO639_2 : variantIter->layoutBaseISO639_2;
+            break;
+        }
+    }
+
+    if(iso639_2Codes.empty())
+    {
+        LOG((CLOG_WARN "Language \"%s\" is missed or iso code for it unknown", name.c_str()));
+        return "";
+    }
+
+    if(iso639_2Codes.size() > 1)
+    {
+        LOG((CLOG_WARN "Language \"%s\" has more than one iso code, take first", name.c_str()));
+        return "";
+    }
+
+    auto isoCode = *iso639_2Codes.begin();
+    auto tableIter = std::find_if(ISO_Table.begin(), ISO_Table.end(),
+                                        [isoCode](const std::pair<String, String>& c) {return c.first == isoCode;});
+    if(tableIter == ISO_Table.end()) {
+        LOG((CLOG_WARN "ISO 639-2 code \"%s\" is missed in table", isoCode.c_str()));
+        return "";
+    }
+
+    return tableIter->second;
+}
+

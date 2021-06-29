@@ -29,9 +29,10 @@
 // 1.4:  adds crypto support
 // 1.5:  adds file transfer and removes home brew crypto
 // 1.6:  adds clipboard streaming
+// 1.7:  adds language sync
 // NOTE: with new version, synergy minor version should increment
 static const SInt16        kProtocolMajorVersion = 1;
-static const SInt16        kProtocolMinorVersion = 6;
+static const SInt16        kProtocolMinorVersion = 7;
 
 // default contact port number
 static const UInt16        kDefaultPort = 24800;
@@ -109,9 +110,8 @@ extern const char*        kMsgHello;
 // respond to hello from server;  secondary -> primary
 // $1 = protocol major version number supported by client.  $2 =
 // protocol minor version number supported by client.  $3 = client
-// name. $4 = client language list
+// name.
 extern const char*        kMsgHelloBack;
-
 
 //
 // command codes
@@ -273,6 +273,16 @@ extern const char*        kMsgDFileTransfer;
 // the number of dragging objects. Then the following string consists
 // of each object's directory.
 extern const char*        kMsgDDragInfo;
+
+// send language list:  primary <-> secondary
+// list is an array of language ISO 639-2 codes joined without delimeter
+// $1 = language list
+extern const char*        kMsgDLanguageList;
+
+// send new language:  primary <-> secondary
+// language is ISO 639-2 code
+// $1 = language code
+extern const char*        kMsgDLanguageSet;
 
 //
 // query codes

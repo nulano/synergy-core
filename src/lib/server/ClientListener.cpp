@@ -188,6 +188,8 @@ ClientListener::handleUnknownClient(const Event&, void* vclient)
         m_waitingClients.push_back(client);
         m_events->addEvent(Event(m_events->forClientListener().connected(),
                                  this));
+        m_events->addEvent(Event(m_events->forClientListener().connected(),
+                                 client));
 
         // watch for client to disconnect while it's in our queue
         m_events->adoptHandler(m_events->forClientProxy().disconnected(), client,

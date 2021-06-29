@@ -27,6 +27,7 @@ namespace tinyxml2
 class X11LayoutsParser {
 public:
     static std::vector<String> getX11LanguageList();
+	static String              getIsoCodeByX11LanguageName(String name);
 
 private:
     struct Lang {

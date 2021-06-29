@@ -41,6 +41,7 @@ ClientProxy1_6::ClientProxy1_6(const String& name, synergy::IStream* stream, Ser
 
 ClientProxy1_6::~ClientProxy1_6()
 {
+    m_events->removeHandler(m_events->forClipboard().clipboardSending(), this);
 }
 
 void

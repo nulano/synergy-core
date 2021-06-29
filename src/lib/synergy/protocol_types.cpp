@@ -18,8 +18,8 @@
 
 #include "synergy/protocol_types.h"
 
-const char*                kMsgHello            = "Synergy%2i%2i%s";
-const char*                kMsgHelloBack        = "Synergy%2i%2i%s%s";
+const char*                kMsgHello            = "Synergy%2i%2i";
+const char*                kMsgHelloBack        = "Synergy%2i%2i%s";
 const char*                kMsgCNoop             = "CNOP";
 const char*                kMsgCClose             = "CBYE";
 const char*                kMsgCEnter             = "CINN%2i%2i%4i%2i";
@@ -46,6 +46,8 @@ const char*                kMsgDInfo            = "DINF%2i%2i%2i%2i%2i%2i%2i";
 const char*                kMsgDSetOptions        = "DSOP%4I";
 const char*                kMsgDFileTransfer    = "DFTR%1i%s";
 const char*                kMsgDDragInfo        = "DDRG%2i%s";
+const char*                kMsgDLanguageList     = "DLLS%s";
+const char*                kMsgDLanguageSet     = "DLSE%s";
 const char*                kMsgQInfo            = "QINF";
 const char*                kMsgEIncompatible    = "EICV%2i%2i";
 const char*                kMsgEBusy             = "EBSY";

@@ -57,6 +57,10 @@ public:
 
     void showMessageBox(const String& title, const String& text) override;
 
+    void setKeyboardLanguage(String lang) override;
+
+    String getKeyboardLanguage() override;
+
 private:
     AppExitMode            m_exitMode;
     IEventQueue*        m_events;

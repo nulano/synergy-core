@@ -64,6 +64,9 @@ public:
 
     // sending dragging information to server
     void                sendDragInfo(UInt32 fileCount, const char* info, size_t size);
+
+    // sending language information to server
+    void                sendLangInfo(String& lang);
     
 #ifdef TEST_ENV
     void                handleDataForTest() { handleData(Event(), NULL); }
@@ -111,6 +114,8 @@ private:
     void                infoAcknowledgment();
     void                fileChunkReceived();
     void                dragInfoReceived();
+    void                langInfoReceived();
+    void                langSetReceived();
     void                handleClipboardSendingEvent(const Event&, void*);
 
 private:

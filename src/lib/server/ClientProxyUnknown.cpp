@@ -26,9 +26,9 @@
 #include "server/ClientProxy1_4.h"
 #include "server/ClientProxy1_5.h"
 #include "server/ClientProxy1_6.h"
+#include "server/ClientProxy1_7.h"
 #include "synergy/protocol_types.h"
 #include "synergy/ProtocolUtil.h"
-#include "synergy/AppUtil.h"
 #include "synergy/XSynergy.h"
 #include "io/IStream.h"
 #include "io/XIO.h"
@@ -58,14 +58,9 @@ ClientProxyUnknown::ClientProxyUnknown(synergy::IStream* stream, double timeout,
     addStreamHandlers();
 
     LOG((CLOG_DEBUG1 "saying hello"));
-    String allKeyboardLayoutsStr;
-    for (const auto& layout : AppUtil::instance().getKeyboardLayoutList()) {
-        allKeyboardLayoutsStr += layout;
-    }
     ProtocolUtil::writef(m_stream, kMsgHello,
                             kProtocolMajorVersion,
-                            kProtocolMinorVersion,
-                            &allKeyboardLayoutsStr);
+                            kProtocolMinorVersion);
 }
 
 ClientProxyUnknown::~ClientProxyUnknown()
@@ -184,7 +179,6 @@ ClientProxyUnknown::handleData(const Event&, void*)
     LOG((CLOG_DEBUG1 "parsing hello reply"));
 
     String name("<unknown>");
-    String keyboardLayoutList("<unknown>");
     try {
         // limit the maximum length of the hello
         UInt32 n = m_stream->getSize();
@@ -196,32 +190,13 @@ ClientProxyUnknown::handleData(const Event&, void*)
         // parse the reply to hello
         SInt16 major, minor;
         if (!ProtocolUtil::readf(m_stream, kMsgHelloBack,
-                                    &major, &minor, &name, &keyboardLayoutList)) {
+                                    &major, &minor, &name)) {
             throw XBadClient();
         }
 
         // disallow invalid version numbers
         if (major <= 0 || minor < 0) {
             throw XIncompatibleClient(major, minor);
-        }
-
-        String missedLanguages;
-        String supportedLanguages;
-        auto localLayouts = AppUtil::instance().getKeyboardLayoutList();
-        for(int i = 0; i <= (int)keyboardLayoutList.size() - 2; i +=2) {
-            auto serverLayout = keyboardLayoutList.substr(i, 2);
-            if (std::find(localLayouts.begin(), localLayouts.end(), serverLayout) == localLayouts.end()) {
-                missedLanguages += serverLayout;
-                missedLanguages += ' ';
-            }
-            else {
-                supportedLanguages += serverLayout;
-                supportedLanguages += ' ';
-            }
-        }
-
-        if(!supportedLanguages.empty()) {
-            LOG((CLOG_DEBUG "Supported client languages: %s", supportedLanguages.c_str()));
         }
 
         // remove stream event handlers.  the proxy we're about to create
@@ -259,17 +234,16 @@ ClientProxyUnknown::handleData(const Event&, void*)
             case 6:
                 m_proxy = new ClientProxy1_6(name, m_stream, m_server, m_events);
                 break;
+
+            case 7:
+                m_proxy = new ClientProxy1_7(name, m_stream, m_server, m_events);
+                break;
             }
         }
 
         // hangup (with error) if version isn't supported
         if (m_proxy == NULL) {
             throw XIncompatibleClient(major, minor);
-        }
-
-        if(!missedLanguages.empty()) {
-            AppUtil::instance().showMessageBox("Language synchronization error",
-                                               String("This languages are required for server proper work: ") + missedLanguages);
         }
 
         // the proxy is created and now proxy now owns the stream
