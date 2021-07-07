@@ -1,8 +1,9 @@
 name: Mac
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - Test-delegate-notification
 
 jobs:
   build-on-mac-10_13:
