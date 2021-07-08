@@ -2,23 +2,19 @@ pr: none
 trigger: none
 
 jobs:
-  - job: MacOS
+  - job: Linux
+    pool:
+      vmImage: 'ubuntu-latest'
+
     strategy:
       matrix:
-        catalina-std:
-          image: macOS-10.15
-          platform: x86-64
-          version: 10.14
-          buildType: "standard"
-          prefix: "synergy"
-    pool:
-      vmImage: $[ variables['image'] ]
+        ubuntu2004:
+          image: symless/synergy-core:ubuntu20.04
+          packager: deb
+          name: ubuntu20
 
-    variables:
-      QT_VERSION: '5.15.2'
-      QT_PATH: '/usr/local/opt/qt'
-      Qt5_DIR: '$(QT_PATH)/$(QT_VERSION)/clang_64'
+    container: $[ variables['image'] ]
 
     steps:
       - template: CI/checkout.yml
-      - template: CI/MacOS/mac-build.yml
+      - template: CI/Linux/linux-build.yml
