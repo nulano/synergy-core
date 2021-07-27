@@ -205,6 +205,17 @@ MainWindow::MainWindow (AppConfig& appConfig,
 
     updateAutoConfigWidgets();
 #endif
+
+    test();
+}
+
+void
+MainWindow::test()
+{
+    if (!showOSXNotification("Hospadi prosti", "pokazhi etu xuetu!")) {
+        int stop = 24;
+    }
+    QTimer::singleShot(5000, this, SLOT(test()));
 }
 
 MainWindow::~MainWindow()

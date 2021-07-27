@@ -57,42 +57,13 @@ isOSXDevelopmentBuild()
 bool
 showOSXNotification(const QString& title, const QString& body)
 {
-#if OSX_DEPLOYMENT_TARGET >= 1014
-	// accessing notification center on unsigned build causes an immidiate
-	// application shutodown (in this case synergys) and cannot be caught
-	// to avoid issues with it need to first check if this is a dev build
-	if (isOSXDevelopmentBuild())
-	{
-		qWarning("Not showing notification in dev build");
-		return false;
-	}
+    NSUserNotification *userNotification = [NSUserNotification new];
+    userNotification.title = title.toNSString();
+    userNotification.informativeText = body.toNSString();
 
-	requestOSXNotificationPermission();
-
-	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-
-	UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
-	content.title = title.toNSString();
-	content.body = body.toNSString();
-
-	// Create the request object.
-	UNNotificationRequest* request = [UNNotificationRequest
-		   requestWithIdentifier:@"SecureInput" content:content trigger:nil];
-
-	[center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
-	   if (error != nil) {
-		   qWarning("Notification display request error: %s", [[NSString stringWithFormat:@"%@", error] UTF8String]);
-	   }
-	}];
-#else
-	NSUserNotification* notification = [[NSUserNotification alloc] init];
-	notification.title = title.toNSString();
-	notification.informativeText = body.toNSString();
-	notification.soundName = NSUserNotificationDefaultSoundName;   //Will play a default sound
-	[[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification: notification];
-	[notification autorelease];
-#endif
-	return true;
+    NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+    [center scheduleNotification:userNotification];
+    return true;
 }
 
 bool

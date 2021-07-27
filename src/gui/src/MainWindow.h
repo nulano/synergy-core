@@ -145,6 +145,7 @@ public slots:
         void retryStart(); // If the connection failed this will retry a startSynergy
         void actionStart();
         void handleIdleService(const QString& text);
+        void test();
 
     protected slots:
         void updateLocalFingerprint();
