@@ -24,6 +24,7 @@
 #import <UserNotifications/UNUserNotificationCenter.h>
 #import <UserNotifications/UNNotificationContent.h>
 #import <UserNotifications/UNNotificationTrigger.h>
+#import <OSXNotificationDelegate.h>
 
 #import <QtGlobal>
 
@@ -37,6 +38,11 @@ void requestOSXNotificationPermission()
 	}
 
 	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+    static bool isSetted = false;
+    if(!isSetted){
+        [center setDelegate:[OSXNotificationDelegate new]];
+        isSetted = true;
+    }
 	[center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound)
 		completionHandler:^(BOOL granted, NSError * _Nullable error) {
 		if(error != nil)
@@ -57,7 +63,6 @@ isOSXDevelopmentBuild()
 bool
 showOSXNotification(MainWindow* window, const QString& title, const QString& body)
 {
-    window->appendLogInfo("Notification emmited");
 #if OSX_DEPLOYMENT_TARGET >= 1014
 	// accessing notification center on unsigned build causes an immidiate
 	// application shutodown (in this case synergys) and cannot be caught
@@ -74,7 +79,6 @@ showOSXNotification(MainWindow* window, const QString& title, const QString& bod
 	content.title = title.toNSString();
 	content.body = body.toNSString();
     content.sound = [UNNotificationSound defaultSound];
-    [content setValue:@(YES) forKeyPath:@"shouldAlwaysAlertWhileAppIsForeground"];
 
 	// Create the request object.
 	UNNotificationRequest* request = [UNNotificationRequest
