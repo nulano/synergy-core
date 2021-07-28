@@ -64,27 +64,25 @@ showOSXNotification(MainWindow* window, const QString& title, const QString& bod
 	// to avoid issues with it need to first check if this is a dev build
 	if (isOSXDevelopmentBuild())
 	{
-        window->appendLogInfo("Dev build detected");
-		qWarning("Not showing notification in dev build");
+        window->appendLogInfo("Not showing notification in dev build");
 		return false;
 	}
 
 	requestOSXNotificationPermission();
 
-	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-
 	UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
 	content.title = title.toNSString();
 	content.body = body.toNSString();
+    content.sound = [UNNotificationSound defaultSound];
+    [content setValue:@(YES) forKeyPath:@"shouldAlwaysAlertWhileAppIsForeground"];
 
 	// Create the request object.
 	UNNotificationRequest* request = [UNNotificationRequest
 		   requestWithIdentifier:@"SecureInput" content:content trigger:nil];
 
-	[center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
 	   if (error != nil) {
-           window->appendLogInfo(QString("Add notification error: ") + [[NSString stringWithFormat:@"%@", error] UTF8String]);
-		   qWarning("Notification display request error: %s", [[NSString stringWithFormat:@"%@", error] UTF8String]);
+           window->appendLogInfo(QString("Notification display request error: ") + [[NSString stringWithFormat:@"%@", error] UTF8String]);
 	   }
 	}];
 #else
