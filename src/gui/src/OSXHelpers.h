@@ -20,6 +20,7 @@
 #define OSXHELPERS__H
 
 #include <QString>
+#include <MainWindow.h>
 
 enum class IconsTheme {
     ICONS_DARK,
@@ -29,7 +30,7 @@ enum class IconsTheme {
 
 void requestOSXNotificationPermission();
 bool isOSXDevelopmentBuild();
-bool showOSXNotification(const QString& title, const QString& body);
+bool showOSXNotification(MainWindow* window, const QString& title, const QString& body);
 bool isOSXInterfaceStyleDark();
 IconsTheme getOSXIconsTheme();
 

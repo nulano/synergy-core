@@ -55,15 +55,47 @@ isOSXDevelopmentBuild()
 }
 
 bool
-showOSXNotification(const QString& title, const QString& body)
+showOSXNotification(MainWindow* window, const QString& title, const QString& body)
 {
-    NSUserNotification *userNotification = [NSUserNotification new];
-    userNotification.title = title.toNSString();
-    userNotification.informativeText = body.toNSString();
+    window->appendLogInfo("Notification emmited");
+#if OSX_DEPLOYMENT_TARGET >= 1014
+	// accessing notification center on unsigned build causes an immidiate
+	// application shutodown (in this case synergys) and cannot be caught
+	// to avoid issues with it need to first check if this is a dev build
+	if (isOSXDevelopmentBuild())
+	{
+        window->appendLogInfo("Dev build detected");
+		qWarning("Not showing notification in dev build");
+		return false;
+	}
 
-    NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
-    [center scheduleNotification:userNotification];
-    return true;
+	requestOSXNotificationPermission();
+
+	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+
+	UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+	content.title = title.toNSString();
+	content.body = body.toNSString();
+
+	// Create the request object.
+	UNNotificationRequest* request = [UNNotificationRequest
+		   requestWithIdentifier:@"SecureInput" content:content trigger:nil];
+
+	[center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+	   if (error != nil) {
+           window->appendLogInfo(QString("Add notification error: ") + [[NSString stringWithFormat:@"%@", error] UTF8String]);
+		   qWarning("Notification display request error: %s", [[NSString stringWithFormat:@"%@", error] UTF8String]);
+	   }
+	}];
+#else
+	NSUserNotification* notification = [[NSUserNotification alloc] init];
+	notification.title = title.toNSString();
+	notification.informativeText = body.toNSString();
+	notification.soundName = NSUserNotificationDefaultSoundName;   //Will play a default sound
+	[[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification: notification];
+	[notification autorelease];
+#endif
+	return true;
 }
 
 bool

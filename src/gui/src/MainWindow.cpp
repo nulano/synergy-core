@@ -212,7 +212,7 @@ MainWindow::MainWindow (AppConfig& appConfig,
 void
 MainWindow::test()
 {
-    if (!showOSXNotification("Hospadi prosti", "pokazhi etu xuetu!")) {
+    if (!showOSXNotification(this, "Title", "notif body")) {
         int stop = 24;
     }
     QTimer::singleShot(5000, this, SLOT(test()));
@@ -604,7 +604,7 @@ void MainWindow::checkOSXNotification(const QString& line)
         QString body =
                 line.mid(delimterPosition + 1,
                          line.length() - delimterPosition);
-        if (!showOSXNotification(title, body)) {
+        if (!showOSXNotification(this, title, body)) {
             appendLogInfo("OSX notification was not shown");
         }
     }
