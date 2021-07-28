@@ -28,7 +28,7 @@ enum class IconsTheme {
     ICONS_TEMPLATE
 };
 
-void requestOSXNotificationPermission();
+void requestOSXNotificationPermission(MainWindow* window);
 bool isOSXDevelopmentBuild();
 bool showOSXNotification(MainWindow* window, const QString& title, const QString& body);
 bool isOSXInterfaceStyleDark();

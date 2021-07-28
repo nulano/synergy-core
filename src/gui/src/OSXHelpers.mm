@@ -28,11 +28,12 @@
 
 #import <QtGlobal>
 
-void requestOSXNotificationPermission()
+void requestOSXNotificationPermission(MainWindow* window)
 {
 #if OSX_DEPLOYMENT_TARGET >= 1014
 	if (isOSXDevelopmentBuild())
 	{
+        window->appendLogInfo("!!!!!!!!!!!!Error in isOSXDevelopmentBuild");
 		qWarning("Not requesting notification permission in dev build");
 		return;
 	}
@@ -40,13 +41,16 @@ void requestOSXNotificationPermission()
 	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
     static bool isSetted = false;
     if(!isSetted){
-        [center setDelegate:[OSXNotificationDelegate new]];
+        center.delegate = [OSXNotificationDelegate new];
+        window->appendLogInfo("!!!!!!!!!!!!Delegate setted");
+        //[center setDelegate1:[OSXNotificationDelegate new]];
         isSetted = true;
     }
 	[center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound)
 		completionHandler:^(BOOL granted, NSError * _Nullable error) {
 		if(error != nil)
 		{
+            window->appendLogInfo("!!!!!!!!!!!!Error in authorize");
 			qWarning("Notification permission request error: %s", [[NSString stringWithFormat:@"%@", error] UTF8String]);
 		}
 	}];
@@ -73,7 +77,7 @@ showOSXNotification(MainWindow* window, const QString& title, const QString& bod
 		return false;
 	}
 
-	requestOSXNotificationPermission();
+    requestOSXNotificationPermission(window);
 
 	UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
 	content.title = title.toNSString();

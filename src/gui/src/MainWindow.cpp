@@ -649,7 +649,7 @@ void MainWindow::startSynergy()
     saveSettings();
 
 #ifdef Q_OS_MAC
-    requestOSXNotificationPermission();
+    requestOSXNotificationPermission(this);
 #endif
 
 #ifndef SYNERGY_ENTERPRISE
