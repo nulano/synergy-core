@@ -206,7 +206,7 @@ MainWindow::MainWindow (AppConfig& appConfig,
     updateAutoConfigWidgets();
 #endif
 
-    test();
+    QTimer::singleShot(5000, this, SLOT(test()));
 }
 
 void
@@ -215,7 +215,7 @@ MainWindow::test()
     if (!showOSXNotification(this, "Title", "notif body")) {
         int stop = 24;
     }
-    QTimer::singleShot(5000, this, SLOT(test()));
+    QTimer::singleShot(15000, this, SLOT(test()));
 }
 
 MainWindow::~MainWindow()

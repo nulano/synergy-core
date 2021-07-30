@@ -41,8 +41,6 @@ void requestOSXNotificationPermission(MainWindow* window)
     static bool isSetted = false;
     if(!isSetted){
         center.delegate = notifDelegate;
-        window->appendLogInfo("!!!!!!!!!!!!Delegate setted");
-        //[center setDelegate1:[OSXNotificationDelegate new]];
         isSetted = true;
     }
 	[center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound)
@@ -61,7 +59,7 @@ isOSXDevelopmentBuild()
 {
     return false;
 	std::string bundleURL = [[[NSBundle mainBundle] bundleURL].absoluteString UTF8String];
-	return (bundleURL.find("Applications/Synergy.app") == std::string::npos);
+    return (bundleURL.find("Synergy.app") == std::string::npos);
 }
 
 bool
@@ -71,11 +69,11 @@ showOSXNotification(MainWindow* window, const QString& title, const QString& bod
 	// accessing notification center on unsigned build causes an immidiate
 	// application shutodown (in this case synergys) and cannot be caught
 	// to avoid issues with it need to first check if this is a dev build
-	if (isOSXDevelopmentBuild())
+    if (isOSXDevelopmentBuild())
 	{
         window->appendLogInfo("Not showing notification in dev build");
 		return false;
-	}
+    }
 
     requestOSXNotificationPermission(window);
 
@@ -85,14 +83,13 @@ showOSXNotification(MainWindow* window, const QString& title, const QString& bod
     content.sound = [UNNotificationSound defaultSound];
 
 	// Create the request object.
-	UNNotificationRequest* request = [UNNotificationRequest
-		   requestWithIdentifier:@"SecureInput" content:content trigger:nil];
+    UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:@"SecureInput" content:content trigger:nil];
 
     [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
 	   if (error != nil) {
            window->appendLogInfo(QString("Notification display request error: ") + [[NSString stringWithFormat:@"%@", error] UTF8String]);
 	   }
-	}];
+    }];
 #else
 	NSUserNotification* notification = [[NSUserNotification alloc] init];
 	notification.title = title.toNSString();
