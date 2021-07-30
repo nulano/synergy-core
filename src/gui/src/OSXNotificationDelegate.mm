@@ -16,6 +16,9 @@
  */
 
 #import "OSXNotificationDelegate.h"
+
+#import <QtGlobal>
+
 @implementation OSXNotificationDelegate
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
 didReceiveNotificationResponse:(UNNotificationResponse *)response
@@ -25,7 +28,8 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
-    completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge | UNNotificationPresentationOptionSound);
+    qWarning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    completionHandler(UNNotificationPresentationOptionList | UNNotificationPresentationOptionBanneßßr);
 }
 @end
-
+ß

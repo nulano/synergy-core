@@ -26,8 +26,7 @@
 #import <UserNotifications/UNNotificationTrigger.h>
 #import <OSXNotificationDelegate.h>
 
-#import <QtGlobal>
-
+OSXNotificationDelegate* notifDelegate = [OSXNotificationDelegate new];
 void requestOSXNotificationPermission(MainWindow* window)
 {
 #if OSX_DEPLOYMENT_TARGET >= 1014
@@ -41,7 +40,7 @@ void requestOSXNotificationPermission(MainWindow* window)
 	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
     static bool isSetted = false;
     if(!isSetted){
-        center.delegate = [OSXNotificationDelegate new];
+        center.delegate = notifDelegate;
         window->appendLogInfo("!!!!!!!!!!!!Delegate setted");
         //[center setDelegate1:[OSXNotificationDelegate new]];
         isSetted = true;
@@ -60,6 +59,7 @@ void requestOSXNotificationPermission(MainWindow* window)
 bool
 isOSXDevelopmentBuild()
 {
+    return false;
 	std::string bundleURL = [[[NSBundle mainBundle] bundleURL].absoluteString UTF8String];
 	return (bundleURL.find("Applications/Synergy.app") == std::string::npos);
 }
