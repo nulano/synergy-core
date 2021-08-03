@@ -513,10 +513,13 @@ Server::switchScreen(BaseClientProxy* dst,
 
 		
 #if defined(__APPLE__)
-        String secureInputApplication = m_primaryClient->getSecureInputApp();
-        if (secureInputApplication != "") {
-			dst->secureInputNotification(secureInputApplication);
-		}
+        if (dst != m_primaryClient) {
+            String secureInputApplication = m_primaryClient->getSecureInputApp();
+            if (secureInputApplication != "") {
+                m_primaryClient->secureInputNotification(secureInputApplication);
+                dst->secureInputNotification(secureInputApplication);
+            }
+        }
 #endif
 
 		// cut over
