@@ -2,7 +2,6 @@ pr: none
 trigger: none
 
 jobs:
-  - template: CI/job-doxygen.yml
 
   - job: Linux
     pool:
@@ -10,59 +9,10 @@ jobs:
 
     strategy:
       matrix:
-        ubuntu1604:
-          image: symless/synergy-core:ubuntu16.04
-          packager: deb
-          name: ubuntu16
-          makeJobsLimit: 1
-        ubuntu1804:
-          image: symless/synergy-core:ubuntu18.04
-          packager: deb
-          name: ubuntu18
         ubuntu2004:
           image: symless/synergy-core:ubuntu20.04
           packager: deb
           name: ubuntu20
-        ubuntu2104:
-          image: symless/synergy-core:ubuntu21.04
-          packager: deb
-          name: ubuntu21
-        debian9:
-          image: symless/synergy-core:debian9
-          packager: deb
-          name: debian9
-        debian10:
-          image: symless/synergy-core:debian10
-          packager: deb
-          name: debian10
-        fedora28:
-          image: symless/synergy-core:fedora28
-          packager: rpm
-          name: fedora28
-        fedora29:
-          image: symless/synergy-core:fedora29
-          packager: rpm
-          name: fedora29
-        fedora30:
-          image: symless/synergy-core:fedora30
-          packager: rpm
-          name: fedora30
-        fedora33:
-          image: symless/synergy-core:fedora33
-          packager: rpm
-          name: fedora33
-        fedora34:
-          image: symless/synergy-core:fedora34
-          packager: rpm
-          name: fedora34
-        centos7.6:
-          image: symless/synergy-core:centos7.6
-          packager: rpm
-          name: centos76
-        centos8:
-          image: symless/synergy-core:centos8
-          packager: rpm
-          name: centos8
 
     container: $[ variables['image'] ]
 
@@ -79,12 +29,7 @@ jobs:
           version: 10.14
           buildType: "standard"
           prefix: "synergy"
-        catalina-ent:
-          image: macOS-10.15
-          platform: x86-64
-          version: 10.14
-          buildType: "enterprise"
-          prefix: "synergy-enterprise"
+
     pool:
       vmImage: $[ variables['image'] ]
 
@@ -104,10 +49,6 @@ jobs:
           image: windows-2019
           buildType: "standard"
           prefix: "synergy"
-        vs2019ent:
-          image: windows-2019
-          buildType: "enterprise"
-          prefix: "synergy-enterprise"
 
     pool:
       vmImage: $[ variables['image'] ]
