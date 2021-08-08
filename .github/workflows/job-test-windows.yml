@@ -66,6 +66,11 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=Release ..
         . ./version
         msbuild synergy-core.sln /p:Configuration=Release
+      
+    # Uncomment to get SSH access for testing
+    - name: Setup tmate session
+      if: always()
+      uses: mxschmitt/action-tmate@v3
     
     - name: Upload
       uses: actions/upload-artifact@v2
