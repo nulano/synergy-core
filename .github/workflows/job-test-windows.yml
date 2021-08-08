@@ -66,6 +66,12 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=Release ..
         . ./version
         msbuild synergy-core.sln /p:Configuration=Release
+    
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: D:\a\synergy-core\synergy-core\build\bin\
 
     - name: Run unit test
       run: .\build\bin\Release\unittests.exe
