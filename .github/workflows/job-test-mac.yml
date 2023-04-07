@@ -37,9 +37,9 @@ jobs:
         make -j
     
     # Uncomment to get SSH access for testing
-    #- name: Setup tmate session
-    #  if: always()
-    #  uses: mxschmitt/action-tmate@v3
+    - name: Setup tmate session
+      if: always()
+      uses: mxschmitt/action-tmate@v3
     
     - name: Upload
       uses: actions/upload-artifact@v2
