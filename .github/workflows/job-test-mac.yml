@@ -7,8 +7,12 @@ on:
     branches: [ master ]
 
 jobs:
-  build-arch64:
-    runs-on: macos-10.15
+  test-macos:
+    runs-on: macos-latest
+
+    defaults:
+      run:
+        shell: bash
 
     env:
       GIT_COMMIT: ${{ github.sha }}
@@ -31,6 +35,17 @@ jobs:
           -DCMAKE_PREFIX_PATH="$(brew --prefix qt5);$(brew --prefix openssl)" ..
         . ./version
         make -j
+    
+    # Uncomment to get SSH access for testing
+    #- name: Setup tmate session
+    #  if: always()
+    #  uses: mxschmitt/action-tmate@v3
+    
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: ./build/bin/
 
     - name: Run unit test
       run: ./build/bin/unittests
